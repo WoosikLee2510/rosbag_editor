@@ -5,18 +5,30 @@
     <arg name="dataset" default="husky" />
 
     <!--Sys-->
+<!--    <arg name="source_bag_path"     default="/media/wl/RPNG_FLASH_6/all_sensor_2023-06-08-12-41-38.bag" /> &lt;!&ndash; ALL(0), DEBUG(1), INFO(2), WARNING(3), ERROR(4) &ndash;&gt;-->
+<!--    <arg name="target_bag_path"     default="/home/wl/Desktop/husky/husky_indoor1.bag" />-->
+<!--    <arg name="time_start"          default="1686242527.00" />-->
+<!--    <arg name="time_end"            default="1686242705.00" />-->
     <arg name="source_bag_path"     default="/media/wl/RPNG_FLASH_6/all_sensor_2023-06-09-09-58-31.bag" /> <!-- ALL(0), DEBUG(1), INFO(2), WARNING(3), ERROR(4) -->
     <arg name="target_bag_path"     default="/home/wl/Desktop/husky/husky_indoor2.bag" />
     <arg name="time_start"          default="1686319120.00" />
     <arg name="time_end"            default="1686319480.98" />
-    <arg name="add_vicon"           default="true" />
-    <arg name="add_lidar"           default="true" />
-    <arg name="add_gps"             default="false" />
-    <arg name="add_rtk"             default="false" />
-    <arg name="add_camera"          default="true" />
-    <arg name="add_imu"             default="true" />
-    <arg name="add_wheel1"          default="true" />
-    <arg name="add_wheel2"          default="true" />
+    <arg name="vicon_add"           default="true" />
+    <arg name="vicon_topic"         default="/Husky/world" />
+    <arg name="lidar_add"           default="true" />
+    <arg name="lidar_topic"         default="/ouster/points" />
+    <arg name="gps_add"             default="false" />
+    <arg name="gps_topic"           default="/gps/fix" />
+    <arg name="rtk_add"             default="false" />
+    <arg name="rtk_topic"           default="/fix" />
+    <arg name="camera_add"          default="true" />
+    <arg name="camera_topic"        default="/t265/fisheye1/image_raw/compressed, /t265/fisheye2/image_raw/compressed" />
+    <arg name="imu_add"             default="true" />
+    <arg name="imu_topic"           default="/t265/imu" />
+    <arg name="wheel1_add"          default="true" />
+    <arg name="wheel1_topic"        default="/joint_states" />
+    <arg name="wheel2_add"          default="true" />
+    <arg name="wheel2_topic"        default="/husky_velocity_controller/odom" />
 
 
     <!-- MASTER NODE! -->
@@ -26,13 +38,21 @@
         <param name="target_bag_path"   type="str"      value="$(arg target_bag_path)" />
         <param name="time_start"        type="double"   value="$(arg time_start)" />
         <param name="time_end"          type="double"   value="$(arg time_end)" />
-        <param name="add_vicon"         type="bool"     value="$(arg add_vicon)" />
-        <param name="add_lidar"         type="bool"     value="$(arg add_lidar)" />
-        <param name="add_gps"           type="bool"     value="$(arg add_gps)" />
-        <param name="add_rtk"           type="bool"     value="$(arg add_rtk)" />
-        <param name="add_camera"        type="bool"     value="$(arg add_camera)" />
-        <param name="add_imu"           type="bool"     value="$(arg add_imu)" />
-        <param name="add_wheel1"        type="bool"     value="$(arg add_wheel1)" />
-        <param name="add_wheel2"        type="bool"     value="$(arg add_wheel2)" />
+        <param name="vicon_add"         type="bool"     value="$(arg vicon_add)" />
+        <param name="lidar_add"         type="bool"     value="$(arg lidar_add)" />
+        <param name="gps_add"           type="bool"     value="$(arg gps_add)" />
+        <param name="rtk_add"           type="bool"     value="$(arg rtk_add)" />
+        <param name="camera_add"        type="bool"     value="$(arg camera_add)" />
+        <param name="imu_add"           type="bool"     value="$(arg imu_add)" />
+        <param name="wheel1_add"        type="bool"     value="$(arg wheel1_add)" />
+        <param name="wheel2_add"        type="bool"     value="$(arg wheel2_add)" />
+        <param name="vicon_topic"       type="str"      value="$(arg vicon_topic)" />
+        <param name="lidar_topic"       type="str"      value="$(arg lidar_topic)" />
+        <param name="gps_topic"         type="str"      value="$(arg gps_topic)" />
+        <param name="rtk_topic"         type="str"      value="$(arg rtk_topic)" />
+        <param name="camera_topic"      type="str"      value="$(arg camera_topic)" />
+        <param name="imu_topic"         type="str"      value="$(arg imu_topic)" />
+        <param name="wheel1_topic"      type="str"      value="$(arg wheel1_topic)" />
+        <param name="wheel2_topic"      type="str"      value="$(arg wheel2_topic)" />
     </node>
 </launch>
