@@ -1,0 +1,22 @@
+
+
+<launch>
+<!--    tum_vi, euroc_mav, kaist-->
+    <arg name="dataset" default="husky" />
+
+    <!--Sys-->
+    <arg name="source_bag_path"             default="/media/wl/RPNG_FLASH_6/all_sensor_2023-06-08-12-41-38.bag" /> <!-- ALL(0), DEBUG(1), INFO(2), WARNING(3), ERROR(4) -->
+    <arg name="target_bag_path"             default="/home/wl/Desktop/husky/husky_indoor0.bag" />
+    <arg name="time_start"                  default="-1" />
+    <arg name="time_end"                    default="-1" />
+
+
+    <!-- MASTER NODE! -->
+    <node name="rosbag_editor" pkg="rosbag_editor" type="rosbag_editor" output="screen" required="true">
+<!--    <node name="rosbag_editor" pkg="rosbag_editor" type="rosbag_editor" output="screen" required="true" launch-prefix="gdb -ex run &#45;&#45;args">-->
+        <param name="source_bag_path"   type="str"      value="$(arg source_bag_path)" />
+        <param name="target_bag_path"   type="str"      value="$(arg target_bag_path)" />
+        <param name="time_start"        type="double"   value="$(arg time_start)" />
+        <param name="time_end"          type="double"   value="$(arg time_end)" />
+    </node>
+</launch>
