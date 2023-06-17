@@ -5,10 +5,18 @@
     <arg name="dataset" default="husky" />
 
     <!--Sys-->
-    <arg name="source_bag_path"             default="/media/wl/RPNG_FLASH_6/all_sensor_2023-06-08-12-41-38.bag" /> <!-- ALL(0), DEBUG(1), INFO(2), WARNING(3), ERROR(4) -->
-    <arg name="target_bag_path"             default="/home/wl/Desktop/husky/husky_indoor0.bag" />
-    <arg name="time_start"                  default="-1" />
-    <arg name="time_end"                    default="-1" />
+    <arg name="source_bag_path"     default="/media/wl/RPNG_FLASH_6/all_sensor_2023-06-08-12-41-38.bag" /> <!-- ALL(0), DEBUG(1), INFO(2), WARNING(3), ERROR(4) -->
+    <arg name="target_bag_path"     default="/home/wl/Desktop/husky/husky_indoor1.bag" />
+    <arg name="time_start"          default="1686242527.00" />
+    <arg name="time_end"            default="1686242705.00" />
+    <arg name="add_vicon"           default="true" />
+    <arg name="add_lidar"           default="true" />
+    <arg name="add_gps"             default="false" />
+    <arg name="add_rtk"             default="false" />
+    <arg name="add_camera"          default="true" />
+    <arg name="add_imu"             default="true" />
+    <arg name="add_wheel1"          default="true" />
+    <arg name="add_wheel2"          default="true" />
 
 
     <!-- MASTER NODE! -->
@@ -18,5 +26,13 @@
         <param name="target_bag_path"   type="str"      value="$(arg target_bag_path)" />
         <param name="time_start"        type="double"   value="$(arg time_start)" />
         <param name="time_end"          type="double"   value="$(arg time_end)" />
+        <param name="add_vicon"         type="bool"     value="$(arg add_vicon)" />
+        <param name="add_lidar"         type="bool"     value="$(arg add_lidar)" />
+        <param name="add_gps"           type="bool"     value="$(arg add_gps)" />
+        <param name="add_rtk"           type="bool"     value="$(arg add_rtk)" />
+        <param name="add_camera"        type="bool"     value="$(arg add_camera)" />
+        <param name="add_imu"           type="bool"     value="$(arg add_imu)" />
+        <param name="add_wheel1"        type="bool"     value="$(arg add_wheel1)" />
+        <param name="add_wheel2"        type="bool"     value="$(arg add_wheel2)" />
     </node>
 </launch>
