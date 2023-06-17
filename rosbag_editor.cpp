@@ -16,15 +16,14 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-// ROS
+// ROS & SYSTEM
 #include <ros/ros.h>
 #include <rosbag/bag.h>
 #include <rosbag/view.h>
-
-// SYSTEM
 #include <Eigen/Eigen>
-
+// MESSAGES
 #include <geometry_msgs/PoseStamped.h>
+#include <nav_msgs/Odometry.h>
 #include <sensor_msgs/NavSatFix.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <sensor_msgs/JointState.h>
@@ -79,7 +78,7 @@ int main(int argc, char **argv) {
   cout << endl;
 
   // Edit the messages in the source file and save it to the target file
-  printf("Saving ros messages to %s...   ", target_bag_path.c_str());
+  printf("Saving bag to %s...   ", target_bag_path.c_str());
   for (const rosbag::MessageInstance &msg : msgs) {
     if (!ros::ok() || msg.getTime().toSec() > time_end)
       break;
@@ -119,12 +118,12 @@ int main(int argc, char **argv) {
       assert(whl != nullptr);
       target_bag.write(msg.getTopic(), msg.getTime(), msg);
     }
-//    // Wheel - Control
-//    if (add_wheel1 && msg.getTopic() == "/joint_status") {
-//      sensor_msgs::JointState::ConstPtr whl = msg.instantiate<sensor_msgs::JointState>();
-//      assert(whl != nullptr);
-//      target_bag.write("/joint_status", msg.getTime(), msg);
-//    }
+    // Wheel - Control
+    if (add_wheel2 && msg.getTopic() == "/husky_velocity_controller/odom") {
+      nav_msgs::Odometry::ConstPtr whl = msg.instantiate<nav_msgs::Odometry>();
+      assert(whl != nullptr);
+      target_bag.write("/velocity_control", msg.getTime(), msg);
+    }
 
     // Camera
     if (add_camera && (msg.getTopic() == "/t265/fisheye1/image_raw/compressed" || msg.getTopic() == "/t265/fisheye2/image_raw/compressed")) {

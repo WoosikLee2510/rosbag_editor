@@ -5,10 +5,10 @@
     <arg name="dataset" default="husky" />
 
     <!--Sys-->
-    <arg name="source_bag_path"     default="/media/wl/RPNG_FLASH_6/all_sensor_2023-06-08-12-41-38.bag" /> <!-- ALL(0), DEBUG(1), INFO(2), WARNING(3), ERROR(4) -->
-    <arg name="target_bag_path"     default="/home/wl/Desktop/husky/husky_indoor1.bag" />
-    <arg name="time_start"          default="1686242527.00" />
-    <arg name="time_end"            default="1686242705.00" />
+    <arg name="source_bag_path"     default="/media/wl/RPNG_FLASH_6/all_sensor_2023-06-09-09-58-31.bag" /> <!-- ALL(0), DEBUG(1), INFO(2), WARNING(3), ERROR(4) -->
+    <arg name="target_bag_path"     default="/home/wl/Desktop/husky/husky_indoor2.bag" />
+    <arg name="time_start"          default="1686319120.00" />
+    <arg name="time_end"            default="1686319480.98" />
     <arg name="add_vicon"           default="true" />
     <arg name="add_lidar"           default="true" />
     <arg name="add_gps"             default="false" />
