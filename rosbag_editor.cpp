@@ -28,12 +28,16 @@
 #include <sensor_msgs/PointCloud2.h>
 #include <sensor_msgs/JointState.h>
 #include <sensor_msgs/CompressedImage.h>
+#include <sensor_msgs/Image.h>
 #include <sensor_msgs/Imu.h>
+#include <cv_bridge/cv_bridge.h>
+#include <opencv2/imgcodecs.hpp>
+
 
 using namespace std;
 
 vector<string> parse_topics(string s);
-void print_sensor(string name, vector<string> topics);
+void print_sensor(string name, vector<string> topics_in, vector<string> topics_out);
 
 int main(int argc, char **argv) {
   // init the system
@@ -46,6 +50,10 @@ int main(int argc, char **argv) {
   nh->param<string>("target_bag_path", target_bag_path, target_bag_path);
   cout << "[ROSBAG EDIT]::source_bag_path: " << source_bag_path << endl;
   cout << "[ROSBAG EDIT]::target_bag_path: " << target_bag_path << endl;
+  if (source_bag_path == target_bag_path) {
+    cout << "[ROSBAG EDIT]::Should set different source and target path!" << endl;
+    std::exit(EXIT_FAILURE);
+  }
 
   rosbag::Bag source_bag, target_bag;
   source_bag.open(source_bag_path, rosbag::bagmode::Read);
@@ -59,7 +67,7 @@ int main(int argc, char **argv) {
   nh->param<double>("time_start", time_start, time_start);
   nh->param<double>("time_end", time_end, time_end);
   time_start = (time_start < 0 ? msgs.getBeginTime().toSec(): time_start);
-  time_end = (time_end < 0 ? msgs.getBeginTime().toSec(): time_end);
+  time_end = (time_end < 0 ? msgs.getEndTime().toSec(): time_end);
   cout << fixed << "[ROSBAG EDIT]::time_start: " << time_start << endl;
   cout << fixed << "[ROSBAG EDIT]::time_end: " << time_end << endl;
   // sensor types to add
@@ -73,37 +81,54 @@ int main(int argc, char **argv) {
   nh->param<bool>("gps_add", gps_add, false);
   nh->param<bool>("rtk_add", rtk_add, false);
   // sensor topics
-  string imu_topic, camera_topic, lidar_topic, vicon_topic, wheel1_topic, wheel2_topic, gps_topic, rtk_topic;
-  nh->param<string>("imu_topic", imu_topic, string());
-  nh->param<string>("camera_topic", camera_topic, string());
-  nh->param<string>("lidar_topic", lidar_topic, string());
-  nh->param<string>("vicon_topic", vicon_topic, string());
-  nh->param<string>("wheel1_topic", wheel1_topic, string());
-  nh->param<string>("wheel2_topic", wheel2_topic, string());
-  nh->param<string>("gps_topic", gps_topic, string());
-  nh->param<string>("rtk_topic", rtk_topic, string());
-  vector<string> imu_topics = parse_topics(imu_topic);
-  vector<string> camera_topics = parse_topics(camera_topic);
-  vector<string> lidar_topics = parse_topics(lidar_topic);
-  vector<string> vicon_topics = parse_topics(vicon_topic);
-  vector<string> wheel1_topics = parse_topics(wheel1_topic);
-  vector<string> wheel2_topics = parse_topics(wheel2_topic);
-  vector<string> gps_topics = parse_topics(gps_topic);
-  vector<string> rtk_topics = parse_topics(rtk_topic);
+  string imu_topic_in, camera_topic_in, lidar_topic_in, vicon_topic_in, wheel1_topic_in, wheel2_topic_in, gps_topic_in, rtk_topic_in;
+  nh->param<string>("imu_topic_in", imu_topic_in, string());
+  nh->param<string>("camera_topic_in", camera_topic_in, string());
+  nh->param<string>("lidar_topic_in", lidar_topic_in, string());
+  nh->param<string>("vicon_topic_in", vicon_topic_in, string());
+  nh->param<string>("wheel1_topic_in", wheel1_topic_in, string());
+  nh->param<string>("wheel2_topic_in", wheel2_topic_in, string());
+  nh->param<string>("gps_topic_in", gps_topic_in, string());
+  nh->param<string>("rtk_topic_in", rtk_topic_in, string());
+  vector<string> imu_topics_in = parse_topics(imu_topic_in);
+  vector<string> camera_topics_in = parse_topics(camera_topic_in);
+  vector<string> lidar_topics_in = parse_topics(lidar_topic_in);
+  vector<string> vicon_topics_in = parse_topics(vicon_topic_in);
+  vector<string> wheel1_topics_in = parse_topics(wheel1_topic_in);
+  vector<string> wheel2_topics_in = parse_topics(wheel2_topic_in);
+  vector<string> gps_topics_in = parse_topics(gps_topic_in);
+  vector<string> rtk_topics_in = parse_topics(rtk_topic_in);
+  string imu_topic_out, camera_topic_out, lidar_topic_out, vicon_topic_out, wheel1_topic_out, wheel2_topic_out, gps_topic_out, rtk_topic_out;
+  nh->param<string>("imu_topic_out", imu_topic_out, string());
+  nh->param<string>("camera_topic_out", camera_topic_out, string());
+  nh->param<string>("lidar_topic_out", lidar_topic_out, string());
+  nh->param<string>("vicon_topic_out", vicon_topic_out, string());
+  nh->param<string>("wheel1_topic_out", wheel1_topic_out, string());
+  nh->param<string>("wheel2_topic_out", wheel2_topic_out, string());
+  nh->param<string>("gps_topic_out", gps_topic_out, string());
+  nh->param<string>("rtk_topic_out", rtk_topic_out, string());
+  vector<string> imu_topics_out = parse_topics(imu_topic_out);
+  vector<string> camera_topics_out = parse_topics(camera_topic_out);
+  vector<string> lidar_topics_out = parse_topics(lidar_topic_out);
+  vector<string> vicon_topics_out = parse_topics(vicon_topic_out);
+  vector<string> wheel1_topics_out = parse_topics(wheel1_topic_out);
+  vector<string> wheel2_topics_out = parse_topics(wheel2_topic_out);
+  vector<string> gps_topics_out = parse_topics(gps_topic_out);
+  vector<string> rtk_topics_out = parse_topics(rtk_topic_out);
 
 
   // =======================
   // Print the setting readings
   // =======================
   cout << "[ROSBAG EDIT]::Saving sensors:" << endl;
-  imu_add ? print_sensor("IMU", imu_topics) : void();
-  camera_add ? print_sensor("CAMERA", camera_topics) : void();
-  lidar_add ? print_sensor("LIDAR", lidar_topics) : void();
-  vicon_add ? print_sensor("VICON", vicon_topics) : void();
-  gps_add ? print_sensor("GPS", gps_topics) : void();
-  rtk_add ? print_sensor("RTK", rtk_topics) : void();
-  wheel1_add ? print_sensor("WHEEL1 - Jointstates", wheel1_topics) : void();
-  wheel2_add ? print_sensor("WHEEL2 - Odometry", wheel2_topics) : void();
+  imu_add ? print_sensor("IMU", imu_topics_in, imu_topics_out) : void();
+  camera_add ? print_sensor("CAMERA", camera_topics_in, camera_topics_out) : void();
+  lidar_add ? print_sensor("LIDAR", lidar_topics_in, lidar_topics_out) : void();
+  vicon_add ? print_sensor("VICON", vicon_topics_in, vicon_topics_out) : void();
+  gps_add ? print_sensor("GPS", gps_topics_in, gps_topics_out) : void();
+  rtk_add ? print_sensor("RTK", rtk_topics_in, rtk_topics_out) : void();
+  wheel1_add ? print_sensor("WHEEL1 - Jointstates", wheel1_topics_in, wheel1_topics_out) : void();
+  wheel2_add ? print_sensor("WHEEL2 - Odometry", wheel2_topics_in, wheel2_topics_out) : void();
 
   // Edit the messages in the source file and save it to the target file
   printf("[ROSBAG EDIT]::Saving bag to %s...   ", target_bag_path.c_str());
@@ -117,59 +142,104 @@ int main(int argc, char **argv) {
     printf("\b\b\b%02d%%", (int)(((msg.getTime().toSec() - time_start) * 100)/(time_end - time_start)));
 
     // VICON
-    if (vicon_add && find(vicon_topics.begin(), vicon_topics.end(), msg.getTopic()) != vicon_topics.end()) {
-      geometry_msgs::PoseStamped::ConstPtr vicon = msg.instantiate<geometry_msgs::PoseStamped>();
-      assert(vicon != nullptr);
-      target_bag.write("/optitrack", msg.getTime(), msg);
+    if (vicon_add) {
+      for (int i = 0; i < vicon_topics_in.size(); i++) {
+        if (vicon_topics_in.at(i) == msg.getTopic()) {
+          assert(msg.instantiate<geometry_msgs::PoseStamped>() != nullptr);
+          target_bag.write(vicon_topics_out.at(i), msg.getTime(), msg);
+          continue;
+        }
+      }
     }
     // GPS
-    if (gps_add &&  find(gps_topics.begin(), gps_topics.end(), msg.getTopic()) != gps_topics.end()) {
-      sensor_msgs::NavSatFix::ConstPtr gps = msg.instantiate<sensor_msgs::NavSatFix>();
-      assert(gps != nullptr);
-      target_bag.write(msg.getTopic(), msg.getTime(), msg);
+    if (gps_add) {
+      for (int i = 0; i < gps_topics_in.size(); i++) {
+        if (gps_topics_in.at(i) == msg.getTopic()) {
+          assert(msg.instantiate<sensor_msgs::NavSatFix>() != nullptr);
+          target_bag.write(gps_topics_out.at(i), msg.getTime(), msg);
+          continue;
+        }
+      }
     }
     // RTK
-    if (rtk_add &&  find(rtk_topics.begin(), rtk_topics.end(), msg.getTopic()) != rtk_topics.end()) {
-      sensor_msgs::NavSatFix::ConstPtr rtk = msg.instantiate<sensor_msgs::NavSatFix>();
-      assert(rtk != nullptr);
-      target_bag.write("/rtk/fix", msg.getTime(), msg);
+    if (rtk_add) {
+      for (int i = 0; i < rtk_topics_in.size(); i++) {
+        if (rtk_topics_in.at(i) == msg.getTopic()) {
+          assert(msg.instantiate<sensor_msgs::NavSatFix>() != nullptr);
+          target_bag.write(rtk_topics_out.at(i), msg.getTime(), msg);
+          continue;
+        }
+      }
     }
     // LiDAR
-    if (lidar_add &&  find(lidar_topics.begin(), lidar_topics.end(), msg.getTopic()) != lidar_topics.end()) {
-      sensor_msgs::PointCloud2::ConstPtr ldr = msg.instantiate<sensor_msgs::PointCloud2>();
-      assert(ldr != nullptr);
-      target_bag.write(msg.getTopic(), msg.getTime(), msg);
-    }
-    // Wheel - Jointstatus
-    if (wheel1_add &&  find(wheel1_topics.begin(), wheel1_topics.end(), msg.getTopic()) != wheel1_topics.end()) {
-      sensor_msgs::JointState::ConstPtr whl = msg.instantiate<sensor_msgs::JointState>();
-      assert(whl != nullptr);
-      target_bag.write(msg.getTopic(), msg.getTime(), msg);
-    }
-    // Wheel - Control
-    if (wheel2_add &&  find(wheel2_topics.begin(), wheel2_topics.end(), msg.getTopic()) != wheel2_topics.end()) {
-      nav_msgs::Odometry::ConstPtr whl = msg.instantiate<nav_msgs::Odometry>();
-      assert(whl != nullptr);
-      target_bag.write("/velocity_control", msg.getTime(), msg);
-    }
-    // Camera
-    if (camera_add &&  find(camera_topics.begin(), camera_topics.end(), msg.getTopic()) != camera_topics.end()) {
-      sensor_msgs::CompressedImage::ConstPtr img = msg.instantiate<sensor_msgs::CompressedImage>();
-      assert(img != nullptr);
-      target_bag.write(msg.getTopic(), msg.getTime(), msg);
+    if (lidar_add) {
+      for (int i = 0; i < lidar_topics_in.size(); i++) {
+        if (lidar_topics_in.at(i) == msg.getTopic()) {
+          assert(msg.instantiate<sensor_msgs::PointCloud2>() != nullptr);
+          target_bag.write(lidar_topics_out.at(i), msg.getTime(), msg);
+          continue;
+        }
+      }
     }
     // IMU
-    if (camera_add &&  find(imu_topics.begin(), imu_topics.end(), msg.getTopic()) != imu_topics.end()) {
-      sensor_msgs::Imu::ConstPtr imu = msg.instantiate<sensor_msgs::Imu>();
-      assert(imu != nullptr);
-      target_bag.write(msg.getTopic(), msg.getTime(), msg);
+    if (imu_add) {
+      for (int i = 0; i < imu_topics_in.size(); i++) {
+        if (imu_topics_in.at(i) == msg.getTopic()) {
+          assert(msg.instantiate<sensor_msgs::Imu>() != nullptr);
+          target_bag.write(imu_topics_out.at(i), msg.getTime(), msg);
+          continue;
+        }
+      }
+    }
+    // Wheel - Jointstatus
+    if (wheel1_add) {
+      for (int i = 0; i < wheel1_topics_in.size(); i++) {
+        if (wheel1_topics_in.at(i) == msg.getTopic()) {
+          assert(msg.instantiate<sensor_msgs::JointState>() != nullptr);
+          target_bag.write(wheel1_topics_out.at(i), msg.getTime(), msg);
+          continue;
+        }
+      }
+    }
+
+    // Wheel - Jointstatus
+    if (wheel2_add) {
+      for (int i = 0; i < wheel2_topics_in.size(); i++) {
+        if (wheel2_topics_in.at(i) == msg.getTopic()) {
+          assert(msg.instantiate<nav_msgs::Odometry>() != nullptr);
+          target_bag.write(wheel2_topics_out.at(i), msg.getTime(), msg);
+          continue;
+        }
+      }
+    }
+
+    // camera
+    if (camera_add) {
+      for (int i = 0; i < camera_topics_in.size(); i++) {
+        if (camera_topics_in.at(i) == msg.getTopic()) {
+          sensor_msgs::CompressedImage::ConstPtr img_c_ptr = msg.instantiate<sensor_msgs::CompressedImage>();
+          sensor_msgs::Image::ConstPtr img_i_ptr = msg.instantiate<sensor_msgs::Image>();
+          assert(img_c_ptr != nullptr || img_i_ptr != nullptr);
+          if(img_i_ptr != nullptr) { // this is decompressed image so save it as it is
+            target_bag.write(camera_topics_out.at(i), msg.getTime(), msg);
+          } else {
+            assert(img_c_ptr != nullptr);
+            std_msgs::Header header;
+            header.stamp = img_c_ptr->header.stamp;
+            cv::Mat img = cv::imdecode(cv::Mat(img_c_ptr->data), 0);
+            auto img_msg = cv_bridge::CvImage(header, "mono8", img).toImageMsg();
+            target_bag.write(camera_topics_out.at(i), msg.getTime(), img_msg);
+          }
+          continue;
+        }
+      }
     }
   }
   printf("\n");
   // Close the bag files and finish
   source_bag.close();
   target_bag.close();
-  return true;
+  return 0;
 }
 
 
@@ -193,11 +263,11 @@ vector<string> parse_topics(string s) {
 }
 
 
-void print_sensor(string name, vector<string> topics) {
-  cout << "[ROSBAG EDIT]::\t" << name << "(";
-  for (int i = 0; i < topics.size(); i++) {
-    cout << topics.at(i);
-    if (i != topics.size() - 1)
+void print_sensor(string name, vector<string> topics_in, vector<string> topics_out) {
+  cout << "[ROSBAG EDIT]::" << name << "(";
+  for (int i = 0; i < topics_in.size(); i++) {
+    cout << topics_in.at(i) << " -> " << topics_out.at(i);
+    if (i != topics_in.size() - 1)
       cout << ", ";
   }
   cout << ")" << endl;
